@@ -548,7 +548,7 @@ if __name__ == "__main__":
                 "device": "cpu",
             },
             "ac_features": {
-                "ac_type": "DAC",
+                "ac_type": "DescriptAC",
                 "device": "cpu",
             },
         }
