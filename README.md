@@ -83,7 +83,7 @@ pytest tests  # run verification tests
 ```bash
 pip install -r requirements.txt
 pip install fairseq==0.12.2 --no-deps
-sh libs/install.sh
+pip install -Ue libs/multilingual_text_parser
 ```
 
 ### [Singularity Installation](https://docs.sylabs.io/guides/3.11/admin-guide/installation.html)

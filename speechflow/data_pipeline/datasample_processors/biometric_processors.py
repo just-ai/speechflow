@@ -91,7 +91,7 @@ class VoiceBiometricProcessor(BaseDSProcessor):
                 self._model_name.mkdir(parents=True, exist_ok=True)
             self._encoder = EncoderClassifier.from_hparams(
                 source=f"speechbrain/{Path(self._model_name).name}",
-                savedir=Path(self._model_name).absolute().as_posix(),
+                # savedir=Path(self._model_name).absolute().as_posix(),
                 run_opts={"device": self.device},
             )
         elif self._model_type.startswith("wespeaker"):

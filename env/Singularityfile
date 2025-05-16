@@ -21,7 +21,7 @@ apt-get install -y libssl1.1
 apt-get install -y g++
 apt-get install -y wget sox zip unzip p7zip-full ffmpeg
 
-# install dotnet
+# install .NET SDK
 wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 dpkg -i packages-microsoft-prod.deb
 rm packages-microsoft-prod.deb
@@ -57,7 +57,7 @@ echo "exit" >> /ext3/miniconda3/conda_env.sh
 
 chmod 777 -R /ext3/miniconda3
 
-# eSpeak
+# install eSpeak
 apt-get install -y espeak-ng
 
 # make work directory
