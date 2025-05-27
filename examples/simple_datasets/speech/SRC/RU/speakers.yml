@@ -4,6 +4,3 @@ Natasha:
 Ruslan:
   root: 002_Ruslan
   file_list: meta.txt
-Synthetic:
-  root: 003_Synthetic
-  multispeaker: true
