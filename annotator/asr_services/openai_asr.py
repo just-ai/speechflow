@@ -1,6 +1,7 @@
 import typing as tp
 import logging
 
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -9,7 +10,7 @@ import whisper_timestamped as whisper
 
 from whisper.tokenizer import get_tokenizer
 
-from annotator.asr_services.cloud_asr import CloudASR
+from annotator.asr_services.cloud_asr import ASRException, CloudASR
 from speechflow.data_pipeline.core.parser_types import Metadata
 from speechflow.utils.checks import check_install
 from speechflow.utils.gpu_info import get_freer_gpu, get_total_gpu_memory
@@ -84,38 +85,41 @@ class OpenAIASR(CloudASR):
         else:
             return self._device
 
+    def _get_suppress_tokens(self, model, lang: str) -> tp.List[int]:
+        tokenizer = get_tokenizer(multilingual=model.is_multilingual)
+        tokens = [
+            i
+            for i in range(tokenizer.eot)
+            if any(c in "0123456789<>#№@%&*+^°$€¥/\\[]{}" for c in tokenizer.decode([i]))
+        ]
+
+        if "ru" in lang:
+            chars = [chr(i) for i in range(0x0041, 0x005B)]
+            tokens += [
+                i
+                for i in range(tokenizer.eot)
+                if any(c in chars for c in tokenizer.decode([i]).strip())
+            ]
+            chars = [chr(i).lower() for i in range(0x0041, 0x005B)]
+            tokens += [
+                i
+                for i in range(tokenizer.eot)
+                if any(c in chars for c in tokenizer.decode([i]).strip())
+            ]
+
+        return list(set(tokens))
+
     def _transcription(self, metadata: Metadata) -> Metadata:
         if getattr(OpenAIASR, "model", None) is None:
             with OpenAIASR.lock:
                 model = whisper.load_model(self._model_name, device=self._get_device())
+                suppress_tokens = self._get_suppress_tokens(model, self._lang)
                 assert model.is_multilingual
-
-                tokenizer = get_tokenizer(multilingual=model.is_multilingual)
-                number_tokens = [
-                    i
-                    for i in range(tokenizer.eot)
-                    if all(c in "0123456789" for c in tokenizer.decode([i]).strip())
-                ]
-
-                t = [chr(i) for i in range(0x0040, 0x005B)]
-                number_tokens += [
-                    i
-                    for i in range(tokenizer.eot)
-                    if all(c in t for c in tokenizer.decode([i]).strip())
-                ]
-
-                t = [chr(i).lower() for i in range(0x0040, 0x005B)]
-                number_tokens += [
-                    i
-                    for i in range(tokenizer.eot)
-                    if all(c in t for c in tokenizer.decode([i]).strip())
-                ]
-
                 setattr(OpenAIASR, "model", model)
-                setattr(OpenAIASR, "number_tokens", number_tokens)
+                setattr(OpenAIASR, "suppress_tokens", suppress_tokens)
         else:
             model = getattr(OpenAIASR, "model")
-            number_tokens = getattr(OpenAIASR, "number_tokens")
+            suppress_tokens = getattr(OpenAIASR, "suppress_tokens")
 
         md = {"audio_path": metadata["audio_path"]}
 
@@ -134,7 +138,7 @@ class OpenAIASR(CloudASR):
                         condition_on_previous_text=False,
                         beam_size=5,
                         best_of=5,
-                        suppress_tokens=[-1] + number_tokens,
+                        suppress_tokens=[-1] + suppress_tokens,
                     )
             else:
                 result = whisper.transcribe(
@@ -144,11 +148,19 @@ class OpenAIASR(CloudASR):
                     condition_on_previous_text=False,
                     beam_size=5,
                     best_of=5,
-                    suppress_tokens=[-1] + number_tokens,
+                    suppress_tokens=[-1] + suppress_tokens,
                 )
 
         timestamps = []
         for segment in result["segments"]:
+            text = segment.get("text", "")
+            words_stat = Counter(text.split())
+            if max([v for k, v in words_stat.items() if len(k) > 1]) >= 10:
+                if len(result["segments"]) == 1:
+                    raise ASRException(f"Whisper hallucination detected: {text}")
+                else:
+                    continue
+
             for item in segment.get("words", []):
                 word = item["text"]
                 start = item["start"]
@@ -161,7 +173,11 @@ class OpenAIASR(CloudASR):
 
                 timestamps.append((word.strip(), start, end))
 
-        text = " ".join([item[0] for item in timestamps])
+        text = " ".join([item[0] for item in timestamps]).strip()
+
+        if text == text.upper():
+            raise ASRException("There is probably no speech in the audio file.")
+
         md["transcription"] = {
             "text": text,
             "timestamps": timestamps,

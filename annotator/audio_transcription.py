@@ -124,8 +124,8 @@ def main(
                         raise_on_converter_exc=raise_on_converter_exc,
                     )  # type: ignore
                     if n_gpus > 0:
-                        n_processes = n_gpus * int(
-                            get_total_gpu_memory(0) // OPENAI_ASR_TOTAL_GPU_MEM
+                        n_processes = n_gpus * max(
+                            int(get_total_gpu_memory(0) / OPENAI_ASR_TOTAL_GPU_MEM), 1
                         )
                 break
             except Exception as e:
