@@ -48,6 +48,12 @@ class WrapperDecoder(Component):
             dec_params.max_input_length = params.max_output_length
 
         self.decoder = dec_cls(dec_params, input_dim)
+        setattr(self.decoder, "hook_update_content", self.hook_update_content)
+
+        if components == TTS_ENCODERS:
+            self.gate_layer = nn.Linear(params.decoder_inner_dim, 1)
+        else:
+            self.gate_layer = None
 
         for method in inspect.getmembers(self, predicate=inspect.ismethod):
             if method[0].startswith("hook_"):

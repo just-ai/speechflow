@@ -1,13 +1,14 @@
 import math
 
+import torch
+
 from torch import optim
-from torch.optim.lr_scheduler import LambdaLR
 
 __all__ = ["ConstLR", "WarmupInvRsqrtLR", "WarmupCosine"]
 
 
 class ConstLR(optim.lr_scheduler._LRScheduler):
-    def __init__(self, optimizer, lr_max):
+    def __init__(self, optimizer, lr_max: float):
         self._lr_max = lr_max
         super().__init__(optimizer)
 
@@ -19,7 +20,7 @@ class WarmupInvRsqrtLR(optim.lr_scheduler._LRScheduler):
     """Increases learning rate linearly for `warmup` steps, then decays it at inverse sqrt
     rate."""
 
-    def __init__(self, optimizer, lr_max, step_factor=1):
+    def __init__(self, optimizer, lr_max: float, step_factor: int = 1):
         self._lr_max = lr_max
         self._step_factor = step_factor
         super().__init__(optimizer)
@@ -33,7 +34,7 @@ class WarmupInvRsqrtLR(optim.lr_scheduler._LRScheduler):
         return [rate for _ in self.optimizer.param_groups]
 
 
-class WarmupCosine(LambdaLR):
+class WarmupCosine(optim.lr_scheduler.LambdaLR):
     def __init__(
         self,
         optimizer,
@@ -53,3 +54,36 @@ class WarmupCosine(LambdaLR):
             )
 
         super().__init__(optimizer, lr_lambda, last_epoch)
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    from nemo.core.optim.lr_scheduler import CosineAnnealing, NoamAnnealing
+
+    T = 10**6
+    X = list(range(T))
+    Y_torch = []
+    Y_nemo = []
+
+    _opt_torch = optim.AdamW([torch.FloatTensor(16)])
+    _lr_torch = WarmupInvRsqrtLR(_opt_torch, lr_max=1.0e-3)
+
+    _opt_nemo = optim.AdamW([torch.FloatTensor(16)])
+    _lr_nemo = CosineAnnealing(_opt_nemo, max_steps=T // 2, min_lr=1.0e-6)
+
+    for _ in X:
+        _lr_torch.step()
+        Y_torch.append(_lr_torch.get_lr())
+        _lr_nemo.step()
+        Y_nemo.append(_lr_nemo.get_lr())
+
+    figure, axis = plt.subplots(2)
+
+    axis[0].plot(X, Y_torch)
+    axis[0].set_title(_opt_torch.__class__.__name__)
+
+    axis[1].plot(X, Y_nemo)
+    axis[1].set_title(_opt_nemo.__class__.__name__)
+
+    plt.show()

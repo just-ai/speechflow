@@ -274,12 +274,14 @@ def init_data_loader_from_config(
             elif proxy_class:
                 try:
                     proxy = proxy_class.init_from_config(
-                        file_path=data_config_path[0], server_addr=servers[0].address
+                        file_path=data_config_path[0],
+                        server_addr=servers[0].address,
+                        value_select=value_select,
                     )
                     proxy.start()
                     server_addr = proxy.address
                 except Exception as e:
-                    LOGGER.warning(
+                    LOGGER.error(
                         f"{proxy_class.__name__} is not initialised! {trace(exception=e)}"
                     )
                     server_addr = servers[0].address

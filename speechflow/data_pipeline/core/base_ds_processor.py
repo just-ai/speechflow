@@ -38,8 +38,14 @@ class BaseDSProcessor:
         self.components = {}
         self.transform_params = {}
         for step_name in self.pipe:
-            method = getattr(self, step_name)
             method_params = self.pipe_cfg.get(step_name, {})
+
+            if "type" in method_params:
+                method_name = method_params.pop("type")
+            else:
+                method_name = step_name
+
+            method = getattr(self, method_name)
 
             handler = init_method_from_config(method, method_params)
             self.components[step_name] = handler
