@@ -1,0 +1,48 @@
+### Data configuration ###
+
+dirs:
+  data_root: &data_root ../../../examples/simple_datasets/speech/SEGS
+  dump_folder: &dump_folder prosody_dump_24KHz
+
+file_search:
+  ext: .TextGridStage3
+  with_subfolders: true
+
+data_server:
+  n_processes: { default: 8, debug: 1 }
+
+dataset:
+  subsets: [train, test]
+  split_type: auto  # auto, manual
+  split_ratio: { default: 0.999, debug: 0.5 }
+  max_num_samples: { default: 0, debug: 40 }
+  directory_filter:
+    include: { default: ~, ru: RU }
+    exclude: ["!"]
+
+parser:
+  type: ProsodyParser
+  dump_path: !join [*data_root, *dump_folder]
+  pipe: [combine_texts, check_prosody_tags]
+  tokenizer_name:
+    default: google-bert/bert-base-multilingual-cased
+    ru: ai-forever/sbert_large_nlu_ru
+
+collate:
+  type: ProsodyPredictionCollate
+
+processor:
+  type: DataProcessor
+  output_collated_only: True
+
+sampler:
+  train:
+    type: WeightedSampler
+    comb_by_len: True
+    epoch_size: 200000
+    fields_to_compute_weight: [category]
+    filter_tags: [-100]
+    is_sequence: [category]
+  test:
+    type: SimpleSampler
+    comb_by_len: True

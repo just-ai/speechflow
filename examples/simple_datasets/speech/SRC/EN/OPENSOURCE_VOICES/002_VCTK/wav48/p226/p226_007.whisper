@@ -1,0 +1,70 @@
+{
+    "text": "The rainbow is a division of white light into many beautiful colors.",
+    "timestamps": [
+        [
+            "The",
+            1.66,
+            2.34
+        ],
+        [
+            "rainbow",
+            2.34,
+            2.7
+        ],
+        [
+            "is",
+            2.7,
+            3.0
+        ],
+        [
+            "a",
+            3.0,
+            3.1
+        ],
+        [
+            "division",
+            3.1,
+            3.44
+        ],
+        [
+            "of",
+            3.44,
+            3.72
+        ],
+        [
+            "white",
+            3.72,
+            3.98
+        ],
+        [
+            "light",
+            3.98,
+            4.36
+        ],
+        [
+            "into",
+            4.36,
+            4.62
+        ],
+        [
+            "many",
+            4.62,
+            4.96
+        ],
+        [
+            "beautiful",
+            4.96,
+            5.36
+        ],
+        [
+            "colors.",
+            5.36,
+            5.82
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 14:53:07"
+}

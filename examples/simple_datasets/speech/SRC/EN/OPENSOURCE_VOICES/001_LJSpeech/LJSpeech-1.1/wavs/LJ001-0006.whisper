@@ -1,0 +1,80 @@
+{
+    "text": "And it is worth mention in passing that as an example of fine typography,",
+    "timestamps": [
+        [
+            "And",
+            0.0,
+            0.34
+        ],
+        [
+            "it",
+            0.34,
+            0.7
+        ],
+        [
+            "is",
+            0.7,
+            0.88
+        ],
+        [
+            "worth",
+            0.88,
+            1.14
+        ],
+        [
+            "mention",
+            1.14,
+            1.54
+        ],
+        [
+            "in",
+            1.54,
+            1.8
+        ],
+        [
+            "passing",
+            1.8,
+            2.28
+        ],
+        [
+            "that",
+            2.28,
+            3.02
+        ],
+        [
+            "as",
+            3.02,
+            3.3
+        ],
+        [
+            "an",
+            3.3,
+            3.44
+        ],
+        [
+            "example",
+            3.44,
+            3.98
+        ],
+        [
+            "of",
+            3.98,
+            4.3
+        ],
+        [
+            "fine",
+            4.3,
+            4.62
+        ],
+        [
+            "typography,",
+            4.62,
+            5.4
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 12:08:58"
+}

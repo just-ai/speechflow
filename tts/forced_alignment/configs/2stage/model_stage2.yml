@@ -1,0 +1,64 @@
+### Model configuration ###
+
+experiment_name: forced_alignment_stage2
+
+dirs:
+  logging: experiments_fa_2stage
+
+seed: 1234
+
+data_loaders:
+  batch_size: { default: 16, debug: 4 }
+
+batch:
+  type: AlignerBatchProcessor
+
+trainer:
+  accelerator: { default: gpu, debug: cpu }
+  devices: { default: [auto], debug: 1 }
+  # strategy: ddp
+  max_epochs: 100
+  gradient_clip_val: 5.0
+  accumulate_grad_batches: 1
+  # precision: 16
+
+checkpoint:
+  monitor: Epoch
+  mode: max
+  save_top_k: 5
+  every_n_epochs: 5
+
+optimizer:
+  method:
+    type: AdamW
+    weight_decay: 1.e-6
+  lr_scheduler:
+    type: ConstLR
+    lr_max: 1.e-4
+
+loss:
+  type: GlowTTSLoss
+
+model:
+  type: GlowTTS
+  # init_from:
+  #   ckpt_path: /path/to/checkpoint
+  params:
+    token_emb_dim: 256
+    mel_spectrogram_dim: 100
+
+    inner_channels_enc: 256
+    inner_channels_dec: 512
+
+    use_dnn_speaker_emb: true
+    speaker_biometric_model: wespeaker
+    speaker_emb_dim: 256
+
+    use_ling_feat_emb: true
+    use_lang_emb: true
+    use_speaker_emb: true
+    use_speech_quality_emb: true
+
+    # use_alignment_encoder: true
+    # alignment_encoder_temperature: 15.0
+    # alignment_encoder_dist_type: cosine

@@ -1,0 +1,10 @@
+000/0.TextGrid|Printing, in the only sense with which we are at present concerned, differs from most if not from all the arts and crafts represented in the Exhibition.
+000/1.TextGrid|For although the Chinese took impressions from wood blocks engraved in relief for centuries before the woodcutters of the Netherlands, by a similar process.
+000/2.TextGrid|produced the block books, which were the immediate predecessors of the true printed book.
+000/3.TextGrid|the invention of movable metal letters in the middle of the fifteenth century may justly be considered as the invention of the art of printing.
+000/4.TextGrid|And it is worth mention in passing that, as an example of fine typography.
+000/5.TextGrid|has never been surpassed.
+000/6.TextGrid|the earliest book printed with movable types, the Gutenberg, or forty-two line Bible of about fourteen fifty-five.
+000/7.TextGrid|Now, as all books not primarily intended as picture-books consist principally of types composed to form letterpress.
+000/8.TextGrid|Printing, then, for our purpose, may be considered as the art of making books by means of movable types.
+000/9.TextGrid|in being comparatively modern.

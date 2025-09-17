@@ -1,0 +1,94 @@
+### Data configuration ###
+
+dirs:
+  data_root: &data_root ../../../examples/simple_datasets/speech/SEGS
+  dump_folder: &dump_folder dump_24KHz
+
+file_search:
+  ext: .TextGridStage3
+  with_subfolders: true
+
+data_server:
+  n_processes: { default: 8, debug: 1 }
+  # n_gpus: { default: 1, debug: 0 }
+
+dataset:
+  subsets: [train, test]
+  split_type: auto  # auto, manual
+  split_ratio: { default: 0.999, debug: 0.5 }
+  max_num_samples: { default: 0, debug: 40 }
+  directory_filter:
+    include: { default: ~, ru: RU }
+    exclude: ["!"]
+
+parser:
+  type: TTSDSParser
+  dump_path:
+    default: !join [*data_root, *dump_folder]  # fast dataset load
+    # debug: ~
+  pipe: [audio_strip, split_by_phrases, check_phoneme_length, get_simple_intonation_type]
+  pipe_cfg:
+    audio_strip:
+      pad: 0.25
+      add_fade: true
+    split_by_phrases:
+      max_duration: 10  # 10, 12, 15
+    check_phoneme_length:
+      max_len: 0.4
+    get_simple_intonation_type:
+      punctuation_marks: [".", "?"]
+
+preproc:
+  pipe: [load_audio, load_audio_segmentation,
+         spectrogram, melscale,
+         trim, mu_law]
+  pipe_cfg:
+    load_audio:
+      type: SignalProcessor
+      pipe: [load]
+      pipe_cfg:
+        load:
+          sample_rate: 24000
+    spectrogram:
+      type: SpectralProcessor
+      pipe: [magnitude]
+      pipe_cfg:
+        magnitude:
+          n_fft: 1024
+          hop_len: 256
+          win_len: 1024
+          center: False  # False for BigVGAN
+    melscale:
+      type: MelProcessor
+      pipe: [linear_to_mel, amp_to_db]  # normalize
+      pipe_cfg:
+        linear_to_mel:
+          n_mels: 100
+    trim:
+      type: SignalProcessor
+      pipe: [trim]
+      pipe_cfg:
+        trim:
+          random_chunk: true
+          num_samples_per_chunk: 30720  # hop=240,256
+    mu_law:
+      type: SignalProcessor
+      pipe: [mu_law_encode]
+
+collate:
+  type: TTSCollate
+
+processor:
+  type: DataProcessor
+  output_collated_only: true
+
+sampler:
+  train:
+    type: WeightedSampler
+    comb_by_len: true
+    epoch_size: 100000
+    fields_to_compute_weight: [lang, speaker_name, uid]
+    chunks_ratio: [0.4, 0.4, 0.2]
+  test:
+    type: SimpleSampler
+    comb_by_len: true

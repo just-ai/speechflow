@@ -1,0 +1,62 @@
+annoy==1.17.3
+cdpam==0.0.6
+descript-audio-codec==1.0.0
+diffusers==0.21.4
+GitPython==3.1.24
+hdbscan==0.8.33
+librosa==0.9.2
+numba==0.58.1
+numpy==1.23.0
+matplotlib==3.9.0
+openai-whisper==v20231117
+omegaconf==2.4.0.dev2
+packaging>=20.0
+praatio==4.4.0
+psola==0.0.1
+psutil==5.9.0
+pydantic==2.7.1
+pydub==0.24.1
+pyproject-toml==0.0.10
+python-dateutil==2.8.0
+python-Levenshtein==0.12.2
+pytorch-lightning==1.9.5
+pytorch-msssim==1.0.0
+pyworld-prebuilt==0.3.4.4
+pyzmq==25.1.2
+resampy==0.4.2
+scikit-image==0.21.0
+scikit-learn==1.3.2
+scipy==1.10.1
+speechbrain==0.5.13
+StrEnum==0.4.15
+toml==0.10.2
+torch-optimizer==0.3.0
+torchcrepe==0.0.22
+torch_audiomentations==0.11.1
+tqdm==4.66.1
+umap-learn==0.4.0
+vector-quantize-pytorch==1.11.6
+jsonargparse[signatures]>=4.15.2
+pesq==0.0.4
+hydra-core==1.4.0.dev1
+clearml==1.16.4
+monotonic-align==1.0.0
+nnAudio==0.3.3
+bitarray==3.3.1
+sacrebleu==2.5.1
+
+resemblyzer @ git+https://github.com/resemble-ai/Resemblyzer.git@15d828edebe06bc72b9cabc8ef8ca5ab2cb457ce
+whisper-timestamped @ git+https://github.com/linto-ai/whisper-timestamped.git@5d4fdaa93e9c6e1b8d3152903993c85f5c7c0334
+wespeaker @ git+https://github.com/wenet-e2e/wespeaker.git@35ed59383f695341866b72c60df2e54d3a777925
+
+pytest==8.2.2
+black==24.4
+isort==5.13.2
+mypy-extensions==0.4.3
+nuitka==2.6.9
+pre-commit==2.15.0
+typing-extensions==4.9.0
+
+# fairseq==0.12.2
+# streamlit==1.44.1
+# st-annotated-text==4.0.2

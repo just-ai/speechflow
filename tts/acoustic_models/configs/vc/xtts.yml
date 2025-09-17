@@ -1,0 +1,75 @@
+### Model configuration ###
+
+experiment_name: whisp_xtts
+
+dirs:
+  logging: whisp_experiments
+
+seed: 1234
+
+batch:
+  type: TTSBatchProcessorWithPrompt
+
+data_loaders:
+  batch_size: { default: 16, debug: 4 }
+  epoch_len: { train: 10000, test: ~ }
+  min_batch_size: 4
+  min_prefetch_factor: { default: 50, debug: 1 }
+  max_prefetch_factor: { default: 150, debug: 1 }
+
+engine:
+  use_clearml_logger: { default: false, immers: true }
+
+trainer:
+  accelerator: { default: gpu, debug: cpu }
+  devices: { default: [auto], debug: 1 }
+  max_epochs: 150
+  gradient_clip_val: 5.0
+  accumulate_grad_batches: 1
+  # resume_from_checkpoint: /path/to/checkpoint
+
+checkpoint:
+  monitor: Epoch
+  mode: max
+  save_top_k: 30
+  every_n_epochs: 5
+  save_last: false
+
+callbacks:
+  TTSTrainingVisualizer: {}
+
+optimizer:
+  method:
+    type: AdamW
+    weight_decay: 1.e-6
+  lr_scheduler:
+    type: ConstLR
+    lr_max: 1.e-4
+
+loss:
+  type: TTSLoss
+
+model:
+  type: ParallelTTSModel
+  params:
+    input: ssl_feat
+    ssl_feat_dim: 1024
+    ssl_feat_proj_dim: 256
+
+    encoder_type: DummyEncoder
+    encoder_params:
+      encoder_output_dim: 256
+
+    va_type: DummyVarianceAdaptor
+
+    decoder_type: XTTSDecoder
+    decoder_inner_dim: 1024
+    decoder_params:
+      target_audio_feat: ac_feat
+      n_tokens: 46656
+      n_levels: 1
+      n_heads: 4
+      n_layers: 16
+      use_prenet: true
+
+    postnet_type: ~

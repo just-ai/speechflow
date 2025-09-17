@@ -1,0 +1,30 @@
+{
+    "text": "has never been surpassed.",
+    "timestamps": [
+        [
+            "has",
+            0.0,
+            0.18
+        ],
+        [
+            "never",
+            0.18,
+            0.48
+        ],
+        [
+            "been",
+            0.48,
+            0.76
+        ],
+        [
+            "surpassed.",
+            0.76,
+            1.66
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 12:19:08"
+}

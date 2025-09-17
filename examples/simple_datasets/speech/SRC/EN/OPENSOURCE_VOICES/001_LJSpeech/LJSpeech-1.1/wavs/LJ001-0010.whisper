@@ -1,0 +1,100 @@
+{
+    "text": "Now, as all books not primarily intended as picture books consist principally of types composed to form letterpress,",
+    "timestamps": [
+        [
+            "Now,",
+            0.0,
+            0.34
+        ],
+        [
+            "as",
+            0.76,
+            1.08
+        ],
+        [
+            "all",
+            1.08,
+            1.42
+        ],
+        [
+            "books",
+            1.42,
+            1.8
+        ],
+        [
+            "not",
+            1.8,
+            2.24
+        ],
+        [
+            "primarily",
+            2.24,
+            2.84
+        ],
+        [
+            "intended",
+            2.84,
+            3.4
+        ],
+        [
+            "as",
+            3.4,
+            3.72
+        ],
+        [
+            "picture",
+            3.72,
+            4.04
+        ],
+        [
+            "books",
+            4.04,
+            4.52
+        ],
+        [
+            "consist",
+            4.58,
+            5.34
+        ],
+        [
+            "principally",
+            5.34,
+            6.06
+        ],
+        [
+            "of",
+            6.06,
+            6.26
+        ],
+        [
+            "types",
+            6.26,
+            6.64
+        ],
+        [
+            "composed",
+            6.64,
+            7.24
+        ],
+        [
+            "to",
+            7.24,
+            7.54
+        ],
+        [
+            "form",
+            7.54,
+            7.86
+        ],
+        [
+            "letterpress,",
+            7.86,
+            8.58
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 12:21:09"
+}

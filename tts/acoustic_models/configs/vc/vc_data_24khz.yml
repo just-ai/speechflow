@@ -1,0 +1,129 @@
+### Data Configuration ###
+
+dirs:
+  data_root: &data_root ../../../examples/simple_datasets/speech/SEGS
+  dump_folder: &dump_folder dump_vc_whisp_24KHz
+
+file_search:
+  ext: .TextGridStage3
+  with_subfolders: true
+
+data_server:
+  n_processes: { default: 4, debug: 1 }
+  n_gpus: { default: 1, debug: ~ }
+
+dataset:
+  subsets: [train, test]
+  split_type: auto  # auto, manual
+  split_ratio: { default: 0.999, debug: 0.5 }
+  max_num_samples: { default: 0, debug: 40 }
+  directory_filter:
+    exclude: ["!"]
+
+parser:
+  type: TTSDSParser
+  dump_path:
+    default: !join [*data_root, *dump_folder]  # fast dataset load
+    debug: ~
+  pipe: [audio_strip, split_by_phrases, check_phoneme_length, insert_index]
+  pipe_cfg:
+    audio_strip:
+      pad: 0.25
+      add_fade: true
+    split_by_phrases:
+      max_duration: 10  # 10, 12, 15
+    check_phoneme_length:
+      min_len: 0.05
+      max_len: 0.4
+
+preproc:
+  pipe: [load_audio, load_audio_segmentation,
+         denoiser, multiple,
+         spectrogram, melscale,
+         ac, ssl, timedim_interpolation]
+  pipe_cfg:
+    load_audio:
+      type: SignalProcessor
+      pipe: [load, trim]
+      pipe_cfg:
+        load:
+          sample_rate: 24000
+        trim:
+          random_chunk: true
+          max_duration: 2
+    multiple:
+      type: SignalProcessor
+      pipe: [multiple]
+      pipe_cfg:
+        multiple:
+          value: 960
+          odd: true
+    denoiser:
+      type: DenoisingProcessor
+      model_type: facebook
+    spectrogram:
+      type: SpectralProcessor
+      pipe: [magnitude]
+      pipe_cfg:
+        magnitude:
+          n_fft: 1024
+          hop_len: 240
+          win_len: 1024
+    melscale:
+      type: MelProcessor
+      pipe: [linear_to_mel, amp_to_db, normalize]
+      pipe_cfg:
+        linear_to_mel:
+          n_mels: 80
+          f_min: 0
+          f_max: 8000
+    ssl:
+      type: SSLProcessor
+      ssl_type: { default: Wav2Vec, ml: WavLM }
+      ssl_params:
+        default:
+          feature_type: partial
+          level: 12  # 23
+        ml: ~
+        # stream_mod:
+        #   chunk_size: 6400
+        #   context_size: [64000, 6550]
+    ac:
+      type: ACProcessor
+      ac_type: StableAC
+      ac_params:
+        feat_type: quantized
+    timedim_interpolation:
+      features: ssl_feat
+      shape_as: mel
+      ratio: 0.5
+
+singleton_handlers:
+  handlers: [SpeakerIDSetter]
+  SpeakerIDSetter: {}
+  # StatisticsRange:
+  #   statistics_file: !join [*data_root, *dump_folder, ranges.json]
+
+collate:
+  type: TTSCollateWithPrompt
+
+processor:
+  type: DataProcessor
+  output_collated_only: true
+  dump:
+    default: ~
+    debug:
+      data_root: *data_root
+      dump_path: !join [*data_root, *dump_folder]
+      mode: file_path
+      full_dump: true
+
+sampler:
+  train:
+    type: RandomSampler
+    comb_by_len: true
+    use_neighbors: true
+  test:
+    type: SimpleSampler
+    comb_by_len: true
+    use_neighbors: true

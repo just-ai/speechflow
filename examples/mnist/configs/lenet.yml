@@ -1,0 +1,43 @@
+### Model configuration ###
+
+experiment_name: mnist_expr
+
+dirs:
+  logging: _logs
+
+seed: 1234
+
+data_loaders:
+  batch_size: 128
+
+batch:
+  type: MNISTBatchProcessor
+
+trainer:
+  accelerator: gpu
+  devices: [auto]
+  max_epochs: 10
+
+checkpoint:
+  monitor: TotalLoss/valid
+  save_top_k: 5
+  save_last: True
+
+optimizer:
+  method:
+    type: Adam
+    weight_decay: 1.e-6
+  lr_scheduler:
+    type: WarmupInvRsqrtLR
+    lr_max: 0.001
+    step_factor: 0.5
+
+loss:
+  type: MNISTLoss
+
+model:
+  type: LeNet
+
+  params:
+    num_classes: 10
+    input_channels: 3

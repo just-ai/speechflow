@@ -1,0 +1,6 @@
+Natasha:
+  root: 001_Natasha
+  file_list: meta.txt
+Ruslan:
+  root: 002_Ruslan
+  file_list: meta.txt

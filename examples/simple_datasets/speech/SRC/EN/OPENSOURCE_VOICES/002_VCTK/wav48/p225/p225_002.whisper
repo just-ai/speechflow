@@ -1,0 +1,65 @@
+{
+    "text": "Ask her to bring these things with her from the store.",
+    "timestamps": [
+        [
+            "Ask",
+            0.96,
+            1.36
+        ],
+        [
+            "her",
+            1.36,
+            1.58
+        ],
+        [
+            "to",
+            1.58,
+            1.74
+        ],
+        [
+            "bring",
+            1.74,
+            1.9
+        ],
+        [
+            "these",
+            1.9,
+            2.1
+        ],
+        [
+            "things",
+            2.1,
+            2.34
+        ],
+        [
+            "with",
+            2.34,
+            2.5
+        ],
+        [
+            "her",
+            2.5,
+            2.68
+        ],
+        [
+            "from",
+            2.68,
+            2.9
+        ],
+        [
+            "the",
+            2.9,
+            3.08
+        ],
+        [
+            "store.",
+            3.08,
+            3.34
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 15:32:37"
+}

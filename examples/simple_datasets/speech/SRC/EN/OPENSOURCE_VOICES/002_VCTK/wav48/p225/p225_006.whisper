@@ -1,0 +1,95 @@
+{
+    "text": "When the sunlight strikes raindrops in the air, they act as a prism and form a rainbow.",
+    "timestamps": [
+        [
+            "When",
+            1.18,
+            1.7
+        ],
+        [
+            "the",
+            1.7,
+            1.88
+        ],
+        [
+            "sunlight",
+            1.88,
+            2.22
+        ],
+        [
+            "strikes",
+            2.22,
+            2.7
+        ],
+        [
+            "raindrops",
+            2.7,
+            3.32
+        ],
+        [
+            "in",
+            3.32,
+            3.52
+        ],
+        [
+            "the",
+            3.52,
+            3.66
+        ],
+        [
+            "air,",
+            3.66,
+            3.86
+        ],
+        [
+            "they",
+            4.26,
+            4.36
+        ],
+        [
+            "act",
+            4.36,
+            4.62
+        ],
+        [
+            "as",
+            4.62,
+            4.74
+        ],
+        [
+            "a",
+            4.74,
+            4.86
+        ],
+        [
+            "prism",
+            4.86,
+            5.14
+        ],
+        [
+            "and",
+            5.14,
+            5.48
+        ],
+        [
+            "form",
+            5.48,
+            5.84
+        ],
+        [
+            "a",
+            5.84,
+            6.06
+        ],
+        [
+            "rainbow.",
+            6.06,
+            6.32
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 15:31:18"
+}

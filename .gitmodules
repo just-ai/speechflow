@@ -1,0 +1,3 @@
+[submodule "libs/multilingual_text_parser"]
+	path = libs/multilingual_text_parser
+	url = https://github.com/just-ai/multilingual-text-parser.git

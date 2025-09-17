@@ -1,0 +1,75 @@
+{
+    "text": "There is, according to legend, a boiling pot of gold at one end.",
+    "timestamps": [
+        [
+            "There",
+            0.92,
+            1.42
+        ],
+        [
+            "is,",
+            1.42,
+            1.76
+        ],
+        [
+            "according",
+            2.0,
+            2.22
+        ],
+        [
+            "to",
+            2.22,
+            2.42
+        ],
+        [
+            "legend,",
+            2.42,
+            2.76
+        ],
+        [
+            "a",
+            3.3,
+            3.44
+        ],
+        [
+            "boiling",
+            3.44,
+            3.7
+        ],
+        [
+            "pot",
+            3.7,
+            4.04
+        ],
+        [
+            "of",
+            4.04,
+            4.44
+        ],
+        [
+            "gold",
+            4.44,
+            4.72
+        ],
+        [
+            "at",
+            4.72,
+            4.92
+        ],
+        [
+            "one",
+            4.92,
+            5.12
+        ],
+        [
+            "end.",
+            5.12,
+            5.36
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 15:31:43"
+}

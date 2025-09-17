@@ -1,0 +1,37 @@
+### Data Configuration ###
+
+dirs:
+  data_root: ../scripts/temp
+  file_list: ../scripts/temp/filelist.txt
+
+data_server:
+  n_processes: 3
+
+dataset:
+  subsets: [train, test]
+  split_type: manual  # auto, manual
+
+parser:
+  type: ImageDSParser
+  pipe: [convert_label, class_stat]
+  pipe_cfg:
+    convert_label:
+      label_type: int64
+
+preproc:
+  pipe: [image_transform]
+  pipe_cfg:
+    image_transform:
+      type: ImageProcessor
+
+collate:
+  type: ImageCollate
+
+processor:
+  type: DataProcessor
+  output_collated_only: True
+
+sampler:
+  type:
+    train: RandomSampler
+    test: SimpleSampler

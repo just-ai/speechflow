@@ -1,0 +1,60 @@
+### Model configuration ###
+
+experiment_name: prosody_predictor
+
+dirs:
+  logging: prosody_experiments
+
+seed: 1234
+
+batch:
+  type: ProsodyPredictionProcessor
+
+data_loaders:
+  batch_size: { default: 64, debug: 1 }
+  min_prefetch_factor: { default: 50, debug: 1 }
+  max_prefetch_factor: { default: 150, debug: 1 }
+
+trainer:
+  accelerator: { default: gpu, debug: cpu }
+  devices: { default: [auto], debug: 1 }
+  # strategy: ddp
+  max_epochs: 50
+  gradient_clip_val: 5.0
+  accumulate_grad_batches: 1
+
+checkpoint:
+  monitor: category_EER
+  filename: "{epoch}-{step}_{category_EER:.4f}"
+  save_top_k: 3
+  save_last: true
+
+optimizer:
+  method:
+    type: AdamW
+    lr: 1.e-5
+    weight_decay: 0.06
+  lr_scheduler:
+    type: WarmupInvRsqrtLR
+    lr_max: 1.e-5
+
+callbacks:
+  ProsodyCallback:
+    tokenizer_name:
+      default: google-bert/bert-base-multilingual-cased
+      ru: ai-forever/sbert_large_nlu_ru
+
+loss:
+  type: ProsodyPredictionLoss
+  names: [binary, category]
+
+model:
+  type: ProsodyModel
+  params:
+    lm_model_name:
+      default: google-bert/bert-base-multilingual-cased
+      ru: ai-forever/sbert_large_nlu_ru
+    dropout: 0
+    n_classes: 8
+    n_layers_tune: 15
+    classification_task: both

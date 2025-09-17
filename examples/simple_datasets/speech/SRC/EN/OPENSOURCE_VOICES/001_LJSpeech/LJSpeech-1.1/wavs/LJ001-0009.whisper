@@ -1,0 +1,105 @@
+{
+    "text": "Printing, then, for our purpose, may be considered as the art of making books by means of movable types.",
+    "timestamps": [
+        [
+            "Printing,",
+            0.0,
+            0.5
+        ],
+        [
+            "then,",
+            0.62,
+            0.82
+        ],
+        [
+            "for",
+            0.96,
+            1.08
+        ],
+        [
+            "our",
+            1.08,
+            1.36
+        ],
+        [
+            "purpose,",
+            1.36,
+            1.92
+        ],
+        [
+            "may",
+            2.38,
+            2.58
+        ],
+        [
+            "be",
+            2.58,
+            2.74
+        ],
+        [
+            "considered",
+            2.74,
+            3.22
+        ],
+        [
+            "as",
+            3.22,
+            3.48
+        ],
+        [
+            "the",
+            3.48,
+            3.66
+        ],
+        [
+            "art",
+            3.66,
+            3.96
+        ],
+        [
+            "of",
+            3.96,
+            4.2
+        ],
+        [
+            "making",
+            4.2,
+            4.52
+        ],
+        [
+            "books",
+            4.52,
+            5.04
+        ],
+        [
+            "by",
+            5.04,
+            5.64
+        ],
+        [
+            "means",
+            5.64,
+            6.04
+        ],
+        [
+            "of",
+            6.04,
+            6.28
+        ],
+        [
+            "movable",
+            6.28,
+            6.76
+        ],
+        [
+            "types.",
+            6.76,
+            7.22
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 12:41:37"
+}

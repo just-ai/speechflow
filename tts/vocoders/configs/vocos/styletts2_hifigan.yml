@@ -1,0 +1,250 @@
+### Model configuration ###
+
+experiment_name: styletts2_hifigan
+
+dirs:
+  logging: vocos_experiments
+
+seed: 1234
+
+batch:
+  type: VocoderBatchProcessor
+
+data_loaders:
+  batch_size: { default: 24, debug: 2 }
+  min_batch_size: 2
+  min_prefetch_factor: { default: 50, debug: 1 }
+  max_prefetch_factor: { default: 150, debug: 1 }
+
+trainer:
+  accelerator: { default: gpu, debug: cpu }
+  devices: { default: [auto], debug: 1 }
+  # strategy: ddp
+  max_steps: 5000000
+  gradient_clip_val: 100
+  accumulate_grad_batches: 1
+  limit_val_batches: 100
+  log_every_n_steps: 100
+  # resume_from_checkpoint: /path/to/checkpoint
+
+checkpoint:
+  monitor: val_loss
+  filename: "{epoch}-{step}_{val_loss:.4f}"
+  save_top_k: 3
+  save_last: true
+
+callbacks:
+  LearningRateMonitor: {}
+  ModelSummary: {}
+  GradNormCallback: {}
+  VisualizerCallback: {}
+
+engine:
+  class_name: VocosLightningEngine
+  init_args:
+    sample_rate: 24000
+    initial_learning_rate: 5.e-4
+    mel_loss_coeff: 10.0
+    mrd_loss_coeff: 0.1
+    auxiliary_loss_coeff: 1.0
+    decay_mel_coeff: false
+    num_warmup_steps: 0  # Optimizers warmup steps
+    pretrain_mel_steps: 10000  # 0 means GAN objective from the first iteration
+    use_cqtd_disc: false
+    use_sm_loss: true
+    use_wavlm_loss: true
+    use_cdpam_loss: false
+    biometric_model_type: speechbrain  # speechbrain, wespeaker
+    wavlm_model_name:
+      default: wavlm-base-plus
+      debug: C:/wavlm-base-plus
+    # disc_pretrain_path: bigvgan_discriminator_optimizer.pt
+
+    # automatic evaluation
+    evaluate_utmos: true
+    evaluate_pesq: true
+    evaluate_periodicty: true
+
+    use_clearml_logger: false
+
+model:
+  feature_extractor:
+    class_name: TTSFeatures
+    init_args:
+      spectral_loss_end_anneal_iter: 2000000
+
+      input: [transcription, transcription]
+
+      token_emb_dim: 256
+      mel_spectrogram_dim: 100
+
+      # use_learnable_speaker_emb: true
+      # use_dnn_speaker_emb: true
+      use_mean_dnn_speaker_emb: true
+      speaker_biometric_model: wespeaker
+      speaker_emb_dim: 256
+
+      use_average_emb: true
+      averages:
+        rate:
+          interval: [0, 64]
+        energy:
+          interval: [0, 200]
+
+      general_condition:
+        level_1:
+          - condition: [average_rate, speech_quality_emb]
+            condition_type: cat
+            content: [0]
+          - condition: [average_energy]
+            condition_type: cat
+            content: [1]
+
+      encoder_type: ContextEncoder
+      encoder_inner_dim: 512
+      encoder_params:
+        encoder_type:
+          - DiTEncoder
+          - DiTEncoder
+        encoder_params:
+          - encoder_num_layers: 6
+            cnn_n_layers: 3
+            ling_condition_type: cat
+            lm_condition_type: add
+            condition: [speaker_emb]
+            condition_dim: 256
+          - encoder_num_layers: 6
+            cnn_n_layers: 3
+            ling_condition_type: cat
+            xpbert_condition_type: add
+            condition: [speaker_emb]
+            condition_dim: 256
+
+      va_type: HierarchicalVarianceAdaptor
+
+      # decoder_type: ForwardDecoder
+      # decoder_num_layers: 2
+      # decoder_inner_dim: 512
+      # decoder_output_dim: 512
+      # decoder_params:
+      #   condition: [speaker_emb]
+      #   condition_dim: 256
+      #   condition_type: AdaNorm
+
+      decoder_type: WrapperDecoder
+      decoder_num_layers: 6
+      decoder_inner_dim: 512
+      decoder_output_dim: 512
+      decoder_params:
+        base_decoder_type: DiTEncoder
+        base_decoder_params:
+          cnn_n_layers: 0
+          condition: [speaker_emb]
+          condition_dim: 256
+
+      postnet_type: ~
+
+      addm_apply_inverse_speaker_classifier:
+        StyleEncoder_0: ~
+
+      va_variances:
+        0: [biometric_style_encoder]
+        1: [aggregate_energy, aggregate_pitch]
+        2: [durations]
+        3: [energy, pitch]
+      va_variance_params:
+        spectrogram_style_encoder:
+          tag: style_emb
+          as_encoder: true
+          predictor_type: StyleEncoder
+          predictor_params:
+            vp_params:
+              base_encoder_type: StyleSpeech
+              source: spectrogram
+              source_dim: 100
+              random_chunk: false
+              style_emb_dim: 128
+              use_gmvae: true
+              gmvae_n_components: 16
+        biometric_style_encoder:
+          tag: style_emb
+          as_encoder: true
+          predictor_type: StyleEncoder
+          predictor_params:
+            vp_params:
+              base_encoder_type: SimpleStyle
+              source: ecapa_emb
+              source_dim: 192
+              style_emb_dim: 128
+              use_gmvae: true
+              gmvae_n_components: 16
+        aggregate_energy:
+          input_content: [0, 1]
+          detach_input: [true, false]
+          cat_to_content: [0]
+          predictor_type: TokenLevelPredictor
+          predictor_params:
+            vp_params:
+              activation_fn: SiLU
+              loss_alpha: 100
+          denormalize: true
+          as_embedding: true
+          interval: [0, 200]
+          n_bins: 256
+          emb_dim: 64
+        aggregate_pitch:
+          input_content: [0, 1]
+          detach_input: [true, false]
+          cat_to_content: [0]
+          predictor_type: TokenLevelPredictor
+          predictor_params:
+            vp_params:
+              activation_fn: SiLU
+              loss_alpha: 100
+          log_scale: false
+          denormalize: true
+          as_embedding: true
+          interval: [0, 880]
+          n_bins: 256
+          emb_dim: 64
+        durations:
+          input_content: [0, 1]
+          detach_input: true
+          predictor_type: TokenLevelDP
+          predictor_params:
+            vp_output_dim: 25
+            vp_params:
+              add_noise: true
+        energy:
+          input_content: [0, 1]
+          detach_input: [true, false]
+          cat_to_content: []
+          predictor_type: FrameLevelPredictor
+          predictor_params:
+            vp_params:
+              activation_fn: SiLU
+              loss_alpha: 1000
+          denormalize: true
+        pitch:
+          input_content: [0, 1]
+          detach_input: [true, false]
+          cat_to_content: []
+          predictor_type: FrameLevelPredictor
+          predictor_params:
+            vp_params:
+              activation_fn: SiLU
+              loss_alpha: 1000
+              use_ssl_adjustment: false
+          log_scale: false
+          denormalize: true
+
+  backbone:
+    class_name: DummyBackbone
+    init_args: {}
+
+  head:
+    class_name: NSFHiFiGANHead
+    init_args:
+      input_dim: 512
+      condition_dim: 128
+      decode_upsample: false

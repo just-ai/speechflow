@@ -1,0 +1,75 @@
+BootStrap: docker
+From: nvcr.io/nvidia/ai-workbench/python-cuda122:1.0.3
+
+#---------------------------------------------------------------------
+%labels
+#---------------------------------------------------------------------
+Author IlyaKalinovskiy
+Version v1.0.0
+
+#---------------------------------------------------------------------
+%post -c /bin/bash
+#---------------------------------------------------------------------
+apt-get update
+
+DEBIAN_FRONTEND=noninteractive TZ=Europe/Moscow apt-get -y install tzdata
+
+echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list.d/focal-security.list
+
+apt-get update
+apt-get install -y libssl1.1
+apt-get install -y g++
+apt-get install -y wget sox zip unzip p7zip-full ffmpeg
+
+# install .NET SDK
+wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+
+apt-get install -y apt-transport-https && apt-get update
+apt-get install -y dotnet-sdk-5.0
+apt-get install -y aspnetcore-runtime-5.0
+apt-get install -y dotnet-runtime-5.0
+apt-get install -y nuget
+
+# install conda
+wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh -b -p /ext3/miniconda3
+rm Miniconda3-latest-Linux-x86_64.sh
+
+source /ext3/miniconda3/etc/profile.d/conda.sh
+export PATH=/ext3/miniconda3/bin:$PATH
+export PYTHONPATH=/ext3/miniconda3/bin:$PATH
+
+export ENV_NAME=py310
+export PYTHON_VERSION=3.10
+
+conda update -n base conda -y
+conda clean --all --yes
+conda install pip -y
+conda create -p /ext3/miniconda3/envs/$ENV_NAME python=$PYTHON_VERSION
+
+echo "echo '### Activate conda environment ###'" > /ext3/miniconda3/conda_env.sh
+echo "source /ext3/miniconda3/etc/profile.d/conda.sh" >> /ext3/miniconda3/conda_env.sh
+echo "conda activate /ext3/miniconda3/envs/$ENV_NAME" >> /ext3/miniconda3/conda_env.sh
+echo '$COMMAND' >> /ext3/miniconda3/conda_env.sh
+echo "exit" >> /ext3/miniconda3/conda_env.sh
+
+chmod 777 -R /ext3/miniconda3
+
+# install eSpeak
+apt-get install -y espeak-ng
+
+# make work directory
+mkdir /src
+mkdir /data
+
+chmod 777 /home
+
+#---------------------------------------------------------------------
+%runscript
+#---------------------------------------------------------------------
+mkdir -p /home/$USER
+
+export COMMAND="$@"
+exec /bin/bash --noprofile --init-file /ext3/miniconda3/conda_env.sh

@@ -1,0 +1,131 @@
+### Data Configuration ###
+
+dirs:
+  data_root: &data_root ../../../examples/simple_datasets/speech/SEGS
+  dump_folder: &dump_folder dump_fa_24KHz
+
+file_search:
+  ext: .TextGridStage1
+  with_subfolders: true
+
+data_server:
+  n_processes: { default: 10, debug: 1 }
+  n_gpus: { default: 1, debug: ~ }
+
+dataset:
+  subsets: [train, test]
+  split_type: auto  # auto, manual
+  split_ratio:
+    default: { train: [0, 1], test: [0.99, 1] }
+    debug: 0.5
+  max_num_samples: { default: ~, debug: 40 }
+  directory_filter:
+    exclude: ["!"]
+
+parser:
+  type: TTSDSParser
+  dump_path: temp
+  pipe: [audio_strip, split_by_phrases, check_phoneme_length]
+  pipe_cfg:
+    audio_strip:
+      pad: 0.15
+    split_by_phrases:
+      max_duration: 12
+    check_phoneme_length:
+      max_len: 0.3
+
+preproc:
+  pipe: [load_audio, load_audio_segmentation,
+         voice_bio, speech_quality, noise,
+         spectrogram, melscale, add_pauses_from_timestamps, text,
+         reverse]
+  pipe_cfg:
+    load_audio:
+      type: SignalProcessor
+      pipe: [load]
+      pipe_cfg:
+        load:
+          sample_rate: 16000
+    voice_bio:
+      type: VoiceBiometricProcessor
+      model_type: wespeaker  # use "resemblyzer" for training speedup
+      max_audio_duration: 5
+      random_crop: true
+    speech_quality:
+      type: SpeechQualityAssessment
+    noise:
+      type: SignalProcessor
+      pipe: [add_noise]
+    spectrogram:
+      type: SpectralProcessor
+      pipe: [magnitude, spectral_flatness]
+      pipe_cfg:
+        magnitude:
+          n_fft: 1024
+          hop_len: 128
+          win_len: 1024
+    melscale:
+      type: MelProcessor
+      pipe: [linear_to_mel, amp_to_db]
+      pipe_cfg:
+        linear_to_mel:
+          n_mels: 100
+          f_min: 0
+          f_max: 8000
+    add_pauses_from_timestamps:
+      min_len: 0.03
+      use_pauses_from_asr: true
+      check_phoneme_length: true
+    text:
+      type: TTSTextProcessor
+      lang: MULTILANG
+      add_service_tokens: False
+      ignore_ling_feat: [breath_mask]
+    vtlp:
+      type: WaveAugProcessor
+      p: {train: 1.0, test: 0.0}
+      pipe: [vtlp]
+      pipe_cfg:
+        vtlp:
+          p: 0.25
+          alpha_min: 0.95
+          alpha_max: 1.05
+    monotonic_speech:
+      type: WaveAugProcessor
+      pipe: [monotonic_speech]
+      pipe_cfg:
+        monotonic_speech:
+          p: 1.0
+
+collate:
+  type: TTSCollate
+  additional_fields: [transcription_text]
+
+singleton_handlers:
+  handlers: [SpeakerIDSetter]
+  SpeakerIDSetter: {}
+
+processor:
+  type: DataProcessor
+  output_collated_only: true
+  dump:
+    default: ~
+    debug:
+      data_root: *data_root
+      dump_path: !join [*data_root, *dump_folder]
+      mode: file_path
+      full_dump: true
+
+sampler:
+  train:
+    type: WeightedSampler
+    comb_by_len: true
+    epoch_size: 250000
+    fields_to_compute_weight: [lang, speaker_name, uid]
+    chunks_ratio: [0.3, 0.3, 0.4]
+  test:
+    type: WeightedSampler
+    comb_by_len: true
+    epoch_size: 1000
+    fields_to_compute_weight: [lang, speaker_name]
+    chunks_ratio: [0.5, 0.5]

@@ -1,0 +1,89 @@
+### Model configuration ###
+
+experiment_name: styletts2_bigvgan_finetune
+
+dirs:
+  logging: vocos_experiments
+
+seed: 1234
+
+batch:
+  type: VocoderBatchProcessor
+
+data_loaders:
+  batch_size: { default: 3, debug: 2 }
+  min_batch_size: 2
+  min_prefetch_factor: { default: 50, debug: 1 }
+  max_prefetch_factor: { default: 150, debug: 1 }
+
+trainer:
+  accelerator: { default: gpu, debug: cpu }
+  devices: { default: [auto], debug: 1 }
+  # strategy: ddp
+  max_steps: 8000000
+  accumulate_grad_batches: 8
+  gradient_clip_val: 100
+  limit_val_batches: 100
+  log_every_n_steps: 100
+  # resume_from_checkpoint: /path/to/checkpoint
+
+checkpoint:
+  monitor: val_loss
+  filename: "{epoch}-{step}_{val_loss:.4f}"
+  save_top_k: 3
+  save_last: true
+
+callbacks:
+  LearningRateMonitor: {}
+  ModelSummary: {}
+  GradNormCallback: {}
+  VisualizerCallback: {}
+
+engine:
+  class_name: VocosLightningEngine
+  init_args:
+    sample_rate: 24000
+    initial_learning_rate: 5.e-5
+    mel_loss_coeff: 10.0
+    mrd_loss_coeff: 0.1
+    auxiliary_loss_coeff: 1.0
+    decay_mel_coeff: false
+    num_warmup_steps: 0  # Optimizers warmup steps
+    pretrain_mel_steps: 50000  # 0 means GAN objective from the first iteration
+    use_cqtd_disc: false
+    use_sm_loss: false
+    use_wavlm_loss: false
+    use_cdpam_loss: false
+    biometric_model_type: wespeaker  # speechbrain, wespeaker
+    biometric_model_name:
+      default: wespeaker-voxceleb-resnet34-LM
+      debug: C:/wespeaker-voxceleb-resnet34-LM
+    wavlm_model_name:
+      default: wavlm-base-plus
+      debug: C:/wavlm-base-plus
+    # disc_pretrain_path: bigvgan_discriminator_optimizer.pt
+
+    # automatic evaluation
+    evaluate_utmos: true
+    evaluate_pesq: true
+    evaluate_periodicty: true
+
+    use_clearml_logger: false
+
+model:
+  feature_extractor:
+    class_name: TTSFeatures
+    init_args:
+      mel_spectrogram_dim: 100
+      pretrain_path: /path/to/checkpoint
+      freeze: true
+
+  backbone:
+    class_name: DummyBackbone
+    init_args: {}
+
+  head:
+    class_name: BigVGANHead
+    init_args:
+      input_dim: 100
+      # pretrain_path: bigvgan_generator.pt

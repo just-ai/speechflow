@@ -1,0 +1,30 @@
+{
+    "text": "in being comparatively modern.",
+    "timestamps": [
+        [
+            "in",
+            0.0,
+            0.14
+        ],
+        [
+            "being",
+            0.14,
+            0.38
+        ],
+        [
+            "comparatively",
+            0.38,
+            1.2
+        ],
+        [
+            "modern.",
+            1.2,
+            1.64
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 12:38:01"
+}

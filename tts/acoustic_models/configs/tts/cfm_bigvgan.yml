@@ -1,0 +1,200 @@
+### Model configuration ###
+
+experiment_name: cfm_bigvgan
+
+dirs:
+  logging: tts_experiments
+
+seed: 1234
+
+batch:
+  type: TTSBatchProcessor
+
+data_loaders:
+  batch_size: { default: 48, debug: 4 }
+  min_batch_size: 4
+  min_prefetch_factor: { default: 50, debug: 1 }
+  max_prefetch_factor: { default: 150, debug: 1 }
+
+trainer:
+  accelerator: { default: gpu, debug: cpu }
+  devices: { default: [auto], debug: 1 }
+  # strategy: ddp_find_unused_parameters_true
+  max_epochs: 150
+  gradient_clip_val: 5.0
+  accumulate_grad_batches: 1
+  # resume_from_checkpoint: /path/to/checkpoint
+
+checkpoint:
+  monitor: Epoch
+  mode: max
+  save_top_k: 30
+  every_n_epochs: 5
+  save_last: false
+
+callbacks:
+  GradNormCallback: {}
+  TTSTrainingVisualizer: {}
+
+optimizer:
+  method:
+    type: AdamW
+    weight_decay: 1.e-6
+  lr_scheduler:
+    type: ConstLR
+    lr_max: 1.e-4
+
+loss:
+  type: TTSLoss
+  Spectral:
+    loss_fn: l2
+  VAELoss:
+    scale: 0.00002
+    every_iter: 1
+    begin_iter: 1000
+    end_anneal_iter: 10000
+  InverseSpeakerLoss:
+    type: InverseSpeakerLoss
+
+model:
+  type: ParallelTTSModel
+  params:
+    input: [transcription, transcription]
+
+    token_emb_dim: 256
+
+    # use_learnable_speaker_emb: true
+    # use_dnn_speaker_emb: true
+    use_mean_dnn_speaker_emb: true
+    speaker_biometric_model: wespeaker
+    speaker_emb_dim: 256
+
+    use_average_emb: true
+    averages:
+      rate:
+        interval: [0, 64]
+      energy:
+        interval: [0, 200]
+
+    general_condition:
+      level_1:
+        - condition: [average_rate, speech_quality_emb]
+          condition_type: cat
+          content: [0]
+        - condition: [average_energy]
+          condition_type: cat
+          content: [1]
+
+    encoder_type: ContextEncoder
+    encoder_inner_dim: 768
+    encoder_params:
+      encoder_type:
+        - DiTEncoder
+        - DiTEncoder
+      encoder_params:
+        - encoder_num_layers: 6
+          cnn_n_layers: 3
+          ling_condition_type: cat
+          lm_condition_type: add
+          condition: [speaker_emb]
+          condition_dim: 256
+        - encoder_num_layers: 6
+          cnn_n_layers: 3
+          ling_condition_type: cat
+          xpbert_condition_type: add
+          condition: [speaker_emb]
+          condition_dim: 256
+
+    va_type: HierarchicalVarianceAdaptor
+
+    decoder_type: CFMDecoder
+    decoder_num_layers: 6
+    decoder_inner_dim: 768
+    decoder_output_dim: 100
+    decoder_params:
+      use_prior_decoder: true
+      use_cfg: true
+      condition: [speaker_emb, style_emb]
+      condition_dim: 384
+      estimator_type: DiTEncoder
+      estimator_params:
+        use_lsc: true
+      prior_decoder_params:
+        decoder_num_layers: 2
+        condition_type: AdaNorm
+
+    postnet_type: ~
+
+    addm_apply_inverse_speaker_classifier:
+      StyleEncoder_0: ~
+
+    va_variances:
+      0: [biometric_style_encoder]
+      1: [aggregate_energy, aggregate_pitch]
+      2: [durations]
+    va_variance_params:
+      spectrogram_style_encoder:
+        tag: style_emb
+        as_encoder: true
+        predictor_type: StyleEncoder
+        predictor_params:
+          vp_params:
+            base_encoder_type: StyleSpeech
+            source: spectrogram
+            source_dim: 100
+            random_chunk: false
+            style_emb_dim: 128
+            use_gmvae: true
+            gmvae_n_components: 16
+      biometric_style_encoder:
+        tag: style_emb
+        as_encoder: true
+        predictor_type: StyleEncoder
+        predictor_params:
+          vp_params:
+            base_encoder_type: SimpleStyle
+            source: ecapa_emb
+            source_dim: 192
+            style_emb_dim: 128
+            use_gmvae: true
+            gmvae_n_components: 16
+      aggregate_energy:
+        input_content: [0, 1]
+        detach_input: [true, false]
+        cat_to_content: [0]
+        predictor_type: TokenLevelPredictor
+        predictor_params:
+          vp_params:
+            activation_fn: SiLU
+            loss_alpha: 100
+        denormalize: true
+        as_embedding: true
+        interval: [0, 200]
+        n_bins: 256
+        emb_dim: 64
+      aggregate_pitch:
+        input_content: [0, 1]
+        detach_input: [true, false]
+        cat_to_content: [0]
+        predictor_type: TokenLevelPredictor
+        predictor_params:
+          vp_params:
+            activation_fn: SiLU
+            loss_alpha: 100
+        log_scale: false
+        denormalize: true
+        as_embedding: true
+        interval: [0, 880]
+        n_bins: 256
+        emb_dim: 64
+      durations:
+        input_content: [0, 1]
+        detach_input: true
+        predictor_type: TokenLevelDP
+        predictor_params:
+          vp_output_dim: 25
+          vp_params:
+            add_noise: true
+
+# finetune:
+#   ckpt_path: /path/to/checkpoint

@@ -1,0 +1,50 @@
+{
+    "text": "People look, but no one ever finds it.",
+    "timestamps": [
+        [
+            "People",
+            1.0,
+            1.5
+        ],
+        [
+            "look,",
+            1.5,
+            1.84
+        ],
+        [
+            "but",
+            2.14,
+            2.24
+        ],
+        [
+            "no",
+            2.24,
+            2.38
+        ],
+        [
+            "one",
+            2.38,
+            2.5
+        ],
+        [
+            "ever",
+            2.5,
+            2.68
+        ],
+        [
+            "finds",
+            2.68,
+            3.02
+        ],
+        [
+            "it.",
+            3.02,
+            3.24
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 15:31:42"
+}

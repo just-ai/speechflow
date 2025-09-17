@@ -1,0 +1,132 @@
+### Model configuration ###
+
+experiment_name: prosody_model
+
+dirs:
+  logging: prosody_experiments
+
+seed: 1234
+
+batch:
+  type: TTSBatchProcessor
+
+data_loaders:
+  batch_size: { default: 128, debug: 2 }
+  min_batch_size: 2
+  min_prefetch_factor: { default: 50, debug: 1 }
+  max_prefetch_factor: { default: 150, debug: 1 }
+
+trainer:
+  accelerator: { default: gpu, debug: cpu }
+  devices: { default: [auto], debug: 1 }
+  # strategy: ddp
+  max_epochs: 100
+  gradient_clip_val: 5.0
+  accumulate_grad_batches: 1
+
+checkpoint:
+  monitor: Epoch
+  mode: max
+  save_top_k: 10
+  every_n_epochs: 1
+  save_last: False
+
+callbacks:
+  TTSTrainingVisualizer: {}
+  ProsodyTrainingVisualizer:
+    n_classes: 8
+
+optimizer:
+  method:
+    type: AdamW
+    weight_decay: 1.e-6
+  lr_scheduler:
+    type: WarmupInvRsqrtLR
+    lr_max: 0.001
+
+loss:
+  type: TTSLoss
+  VAELoss:
+    scale: 0.00002
+    every_iter: 1
+    begin_iter: 1000
+    end_anneal_iter: 10000
+  InverseSpeakerLoss:
+    type: InverseSpeakerLoss
+
+model:
+  type: ParallelTTSModel
+  params:
+    input: ssl_feat
+    token_emb_dim: 128
+
+    ssl_feat_dim: 1024
+    ssl_feat_proj_dim: 1024
+
+    # use_learnable_speaker_emb: true
+    use_dnn_speaker_emb: true
+    # use_mean_dnn_speaker_emb: true
+    # speaker_biometric_model: wespeaker
+    speaker_emb_dim: 256  # 256
+
+    general_condition:
+      level_1:
+        - condition: [speaker_emb]
+          condition_type: DiT
+
+    encoder_type: ProsodyEncoder
+    encoder_num_layers: 2
+    encoder_inner_dim: 1024
+    encoder_output_dim: 512
+    encoder_params:
+      mt_embed_dim: 1024
+      mt_num_heads: 2
+      mt_layers: 4
+      vq_type: vq
+      vq_codebook_size: 64
+
+    va_type: HierarchicalVarianceAdaptor
+
+    decoder_type: ~
+    postnet_type: ~
+
+    addm_apply_inverse_speaker_classifier:
+      StyleEncoder_0: ~
+
+    vp_num_layers: 2
+    vp_inner_dim: 512
+
+    va_variances:
+      0: [biometric_style_encoder]
+      1: [aggregate_pitch, durations, prosody]
+    va_variance_params:
+      biometric_style_encoder:
+        tag: style_emb
+        as_encoder: true
+        predictor_type: StyleEncoder
+        predictor_params:
+          vp_params:
+            base_encoder_type: SimpleStyle
+            source: ecapa_emb
+            source_dim: 192
+            style_emb_dim: 128
+            use_gmvae: true
+            gmvae_n_components: 16
+      aggregate_pitch:
+        dim: 3
+        predictor_type: TokenLevelPredictor
+      durations:
+        predictor_type: TokenLevelDP
+        predictor_params:
+          vp_output_dim: 25
+          vp_params:
+            add_noise: true
+      prosody:
+        dim: 500
+        predictor_type: TokenLevelPredictor
+        predictor_params:
+          vp_params:
+            loss_type: cross_entropy
+
+# finetune:
+#   ckpt_path: /path/to/checkpoint

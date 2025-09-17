@@ -1,0 +1,196 @@
+### Data configuration ###
+
+dirs:
+  data_root: &data_root ../../../examples/simple_datasets/speech/SEGS
+  dump_folder: &dump_folder dump_24KHz
+
+file_search:
+  ext: .TextGridStage3
+  with_subfolders: true
+
+data_server:
+  n_processes: { default: 8, debug: 1 }
+  # n_gpus: { default: 1, debug: 0 }
+
+dataset:
+  subsets: [train, test]
+  split_type: auto  # auto, manual
+  split_ratio: { default: 0.999, debug: 0.5 }
+  max_num_samples: { default: 0, debug: 40 }
+  directory_filter:
+    include: { default: ~, ru: RU }
+    exclude: ["!"]
+
+parser:
+  type: TTSDSParser
+  dump_path:
+    default: !join [*data_root, *dump_folder]  # fast dataset load
+    # debug: ~
+  pipe: [audio_strip, split_by_phrases, check_phoneme_length, get_simple_intonation_type]
+  pipe_cfg:
+    audio_strip:
+      pad: 0.25
+      add_fade: true
+    split_by_phrases:
+      max_duration: 10  # 10, 12, 15
+    check_phoneme_length:
+      max_len: 0.4
+    get_simple_intonation_type:
+      punctuation_marks: [".", "?"]
+
+preproc:
+  pipe: [load_audio, load_audio_segmentation,
+         voice_bio_speechbrain, store_bio_emb, voice_bio_wespeaker, mean_bio_embedding,
+         speech_quality, ssl,
+         spectrogram, melscale, add_gate_value,
+         pitch, timedim_interpolation,
+         enhancement_energy, enhancement_pitch,
+         add_pauses_from_timestamps, add_service_tokens, text, xpbert, lm,
+         calc_durations, average_by_time, norm, aggregate_by_phoneme,
+         trim, mu_law]
+  pipe_cfg:
+    load_audio:
+      type: SignalProcessor
+      pipe: [load]
+      pipe_cfg:
+        load:
+          sample_rate: 24000
+    voice_bio_speechbrain:
+      type: VoiceBiometricProcessor
+      model_type: speechbrain
+      # max_audio_duration: 5
+      # random_crop: true
+    store_bio_emb:
+      type: store_field
+      key: speaker_emb
+      as_key: ecapa_emb
+    voice_bio_wespeaker:
+      type: VoiceBiometricProcessor
+      model_type: wespeaker
+      # max_audio_duration: 5
+      # random_crop: true
+    speech_quality:
+      type: SpeechQualityAssessment
+      # max_audio_duration: 5
+      # random_crop: true
+    spectrogram:
+      type: SpectralProcessor
+      pipe: [magnitude, energy]
+      pipe_cfg:
+        magnitude:
+          n_fft: 1024
+          hop_len: 256
+          win_len: 1024
+          center: False  # False for BigVGAN
+    melscale:
+      type: MelProcessor
+      pipe: [linear_to_mel, amp_to_db]  # normalize
+      pipe_cfg:
+        linear_to_mel:
+          n_mels: 100
+    pitch:
+      type: PitchProcessor
+      method: pyworld  # pyworld, torchcrepe
+    enhancement_energy:
+      type: signal_enhancement
+      attributes: energy
+      smooth: true
+    enhancement_pitch:
+      type: signal_enhancement
+      attributes: pitch
+      smooth: true
+    add_pauses_from_timestamps:
+      step: 0.05
+      calc_noise_level: true
+    text:
+      type: TTSTextProcessor
+      lang: MULTILANG
+      num_prosodic_classes: 8
+    xpbert:
+      type: XPBertProcessor
+    lm:
+      type: LMProcessor
+      lang: { default: MULTILANG, ru: RU }
+      model_name:
+        default: google-bert/bert-base-multilingual-cased
+        ru: ai-forever/sbert_large_nlu_ru
+      by_transcription: False
+    ssl:
+      type: SSLProcessor
+      ssl_type: { default: Wav2Vec, ml: WavLM }
+      ssl_params:
+        default:
+          feature_type: partial
+          level: 12  # 23
+        ml: ~
+    timedim_interpolation:
+      features: [energy, pitch, ssl_feat]
+      shape_as: mel
+    average_by_time:
+      attributes: [durations, energy, pitch, rate]
+      use_quantile: true
+    norm:
+      type: normalize
+      attributes: [energy, pitch]
+      normalize_by: speaker
+    aggregate_by_phoneme:
+      attributes: [energy, pitch]
+      agg: mean
+    trim:
+      type: SignalProcessor
+      pipe: [trim]
+      pipe_cfg:
+        trim:
+          random_chunk: true
+          # num_samples_per_chunk: 40960  # 40952 for DAC head  # hop=320
+          num_samples_per_chunk: 30720  # hop=240,256
+    mu_law:
+      type: SignalProcessor
+      pipe: [mu_law_encode]
+
+singleton_handlers:
+  handlers: [SpeakerIDSetter, StatisticsRange, MeanBioEmbeddings]
+  SpeakerIDSetter: {}
+    # langs_filter: RU
+    # min_duration: { default: 1.0, debug: ~ }
+    # resume_from_checkpoint: /path/to/checkpoint
+  StatisticsRange:
+    statistics_file: !join [*data_root, *dump_folder, ranges.json]
+  MeanBioEmbeddings:
+    mean_embeddings_file: !join [*data_root, *dump_folder, mean_bio_embeddings.json]
+  DatasetStatistics:
+    dump_path: !join [*data_root, *dump_folder]
+
+collate:
+  type: TTSCollate
+  # multiple:
+  #  spec: 16
+
+processor:
+  type: DataProcessor
+  output_collated_only: true
+  dump:
+    default:
+      data_root: *data_root
+      dump_path: !join [*data_root, *dump_folder]
+      fields: [file_path, speaker_name]
+      handlers: [VoiceBiometricProcessor, SpeechQualityAssessment, SSLProcessor,
+                 PitchProcessor, XPBertProcessor, LMProcessor]
+      mode: file_path
+      skip_samples_without_dump: true
+    # debug:
+    #  data_root: *data_root
+    #  dump_path: !join [*data_root, *dump_folder]
+    #  mode: file_path
+    #  full_dump: true
+
+sampler:
+  train:
+    type: WeightedSampler
+    comb_by_len: true
+    epoch_size: 100000
+    fields_to_compute_weight: [lang, speaker_name, uid]
+    chunks_ratio: [0.4, 0.4, 0.2]
+  test:
+    type: SimpleSampler
+    comb_by_len: true

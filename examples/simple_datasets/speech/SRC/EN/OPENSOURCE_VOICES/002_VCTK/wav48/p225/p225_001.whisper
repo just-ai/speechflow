@@ -1,0 +1,25 @@
+{
+    "text": "Please call Stella.",
+    "timestamps": [
+        [
+            "Please",
+            0.0,
+            0.68
+        ],
+        [
+            "call",
+            0.68,
+            1.12
+        ],
+        [
+            "Stella.",
+            1.12,
+            1.48
+        ]
+    ],
+    "lang": "en",
+    "model_name": "large",
+    "version": "20230124",
+    "api": "OpenAIASR",
+    "date": "08/03/2023 15:31:19"
+}
